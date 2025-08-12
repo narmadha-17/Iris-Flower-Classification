@@ -306,20 +306,23 @@ def count_events():
 def get_event_by_id(event_id):
     """API endpoint to get a specific event by ID"""
     try:
+        app.logger.info(f"Retrieving event with ID: {event_id}")
         event = repo.get_by_id(event_id)
         
         if not event:
+            app.logger.warning(f"Event not found with ID: {event_id}")
             return jsonify({'error': 'Event not found'}), 404
         
         return jsonify(event.to_dict())
         
     except Exception as e:
-        app.logger.error(f"Error retrieving event {event_id}: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve event'}), 500
+        app.logger.error(f"Database error retrieving event {event_id}: {str(e)}")
+        return handle_database_error(f"retrieve event {event_id}", e)
 
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
