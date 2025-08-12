@@ -255,11 +255,18 @@ def search_events():
     search_term = request.args.get('q', '').strip()
     
     if not search_term:
+        app.logger.warning("Search request with empty search term")
         return jsonify({'error': 'Search term is required'}), 400
     
+    if len(search_term) < 2:
+        return jsonify({'error': 'Search term must be at least 2 characters long'}), 400
+    
     try:
+        app.logger.info(f"Searching events for term: {search_term}")
         events = repo.search(search_term)
         events_list = [event.to_dict() for event in events]
+        
+        app.logger.info(f"Search completed: found {len(events_list)} events")
         return jsonify({
             'events': events_list,
             'count': len(events_list),
@@ -267,8 +274,8 @@ def search_events():
         })
         
     except Exception as e:
-        app.logger.error(f"Error searching events: {str(e)}")
-        return jsonify({'error': 'Failed to search events'}), 500
+        app.logger.error(f"Database error searching events: {str(e)}")
+        return handle_database_error("search events", e)
 
 @app.route('/events/count')
 def count_events():
@@ -305,6 +312,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
