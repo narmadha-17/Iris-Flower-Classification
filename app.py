@@ -139,7 +139,11 @@ def create_event():
         data = request.get_json()
         
         if not data:
+            app.logger.warning("Create event request with no data")
             return jsonify({'error': 'No data provided'}), 400
+        
+        # Log the creation attempt
+        app.logger.info(f"Attempting to create event: {data.get('title', 'Unknown')}")
         
         # Create event from dictionary data
         event = create_event_from_dict(data)
@@ -147,11 +151,13 @@ def create_event():
         # Validate event data
         validation_errors = event.validate()
         if validation_errors:
+            app.logger.warning(f"Event validation failed: {validation_errors}")
             return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
         
         # Create event using repository
         event_id = repo.create(event)
         
+        app.logger.info(f"Event created successfully with ID: {event_id}")
         return jsonify({
             'id': event_id, 
             'message': 'Event created successfully',
@@ -162,8 +168,8 @@ def create_event():
         app.logger.error(f"Validation error creating event: {str(e)}")
         return jsonify({'error': str(e)}), 400
     except Exception as e:
-        app.logger.error(f"Error creating event: {str(e)}")
-        return jsonify({'error': 'Failed to create event'}), 500
+        app.logger.error(f"Database error creating event: {str(e)}")
+        return handle_database_error("create event", e)
 
 @app.route('/events/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
@@ -287,6 +293,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
