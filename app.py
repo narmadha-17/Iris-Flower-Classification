@@ -163,40 +163,65 @@ def update_event(event_id):
         app.logger.error(f"Error updating event {event_id}: {str(e)}")
         return jsonify({'error': 'Failed to update event'}), 500
 
-def get_events_for_month(year, month):
-    """Helper function to get events for a specific month"""
-    start_date = f"{year}-{month:02d}-01"
-    if month == 12:
-        end_date = f"{year + 1}-01-01"
-    else:
-        end_date = f"{year}-{month + 1:02d}-01"
+# Additional event management routes
+
+@app.route('/events/search')
+def search_events():
+    """API endpoint to search events by title or description"""
+    search_term = request.args.get('q', '').strip()
     
-    conn = get_db_connection()
-    events = conn.execute(
-        'SELECT * FROM events WHERE date >= ? AND date < ? ORDER BY date, time',
-        (start_date, end_date)
-    ).fetchall()
-    conn.close()
+    if not search_term:
+        return jsonify({'error': 'Search term is required'}), 400
     
-    # Group events by date
-    events_by_date = {}
-    for event in events:
-        date = event['date']
-        if date not in events_by_date:
-            events_by_date[date] = []
-        events_by_date[date].append({
-            'id': event['id'],
-            'title': event['title'],
-            'description': event['description'],
-            'time': event['time']
+    try:
+        events = repo.search(search_term)
+        events_list = [event.to_dict() for event in events]
+        return jsonify({
+            'events': events_list,
+            'count': len(events_list),
+            'search_term': search_term
         })
+        
+    except Exception as e:
+        app.logger.error(f"Error searching events: {str(e)}")
+        return jsonify({'error': 'Failed to search events'}), 500
+
+@app.route('/events/count')
+def count_events():
+    """API endpoint to get event count statistics"""
+    date = request.args.get('date')
     
-    return events_by_date
+    try:
+        if date:
+            count = repo.count_events_by_date(date)
+            return jsonify({'date': date, 'count': count})
+        else:
+            total_count = repo.count_events()
+            return jsonify({'total_count': total_count})
+            
+    except Exception as e:
+        app.logger.error(f"Error counting events: {str(e)}")
+        return jsonify({'error': 'Failed to count events'}), 500
+
+@app.route('/events/<int:event_id>')
+def get_event_by_id(event_id):
+    """API endpoint to get a specific event by ID"""
+    try:
+        event = repo.get_by_id(event_id)
+        
+        if not event:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        return jsonify(event.to_dict())
+        
+    except Exception as e:
+        app.logger.error(f"Error retrieving event {event_id}: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve event'}), 500
 
 if __name__ == '__main__':
-    # Initialize database on startup
-    init_db()
+    # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
