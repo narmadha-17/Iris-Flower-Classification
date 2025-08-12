@@ -69,21 +69,35 @@ def get_events():
 @app.route('/events', methods=['POST'])
 def create_event():
     """API endpoint to create a new event"""
-    data = request.get_json()
-    
-    if not data or not data.get('title') or not data.get('date'):
-        return jsonify({'error': 'Title and date are required'}), 400
-    
-    conn = get_db_connection()
-    conn.execute(
-        'INSERT INTO events (title, description, date, time) VALUES (?, ?, ?, ?)',
-        (data['title'], data.get('description', ''), data['date'], data.get('time', ''))
-    )
-    conn.commit()
-    event_id = conn.lastrowid
-    conn.close()
-    
-    return jsonify({'id': event_id, 'message': 'Event created successfully'}), 201
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Create event from dictionary data
+        event = create_event_from_dict(data)
+        
+        # Validate event data
+        validation_errors = event.validate()
+        if validation_errors:
+            return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
+        
+        # Create event using repository
+        event_id = repo.create(event)
+        
+        return jsonify({
+            'id': event_id, 
+            'message': 'Event created successfully',
+            'event': event.to_dict()
+        }), 201
+        
+    except ValueError as e:
+        app.logger.error(f"Validation error creating event: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        app.logger.error(f"Error creating event: {str(e)}")
+        return jsonify({'error': 'Failed to create event'}), 500
 
 @app.route('/events/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
@@ -164,6 +178,7 @@ if __name__ == '__main__':
     # Initialize database on startup
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
