@@ -123,34 +123,45 @@ def delete_event(event_id):
 @app.route('/events/<int:event_id>', methods=['PUT'])
 def update_event(event_id):
     """API endpoint to update an event"""
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-    
-    conn = get_db_connection()
-    
-    # Check if event exists
-    event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
-    if not event:
-        conn.close()
-        return jsonify({'error': 'Event not found'}), 404
-    
-    # Update event
-    conn.execute(
-        'UPDATE events SET title = ?, description = ?, date = ?, time = ? WHERE id = ?',
-        (
-            data.get('title', event['title']),
-            data.get('description', event['description']),
-            data.get('date', event['date']),
-            data.get('time', event['time']),
-            event_id
-        )
-    )
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'message': 'Event updated successfully'})
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Check if event exists
+        existing_event = repo.get_by_id(event_id)
+        if not existing_event:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        # Update event fields with provided data or keep existing values
+        existing_event.title = data.get('title', existing_event.title)
+        existing_event.description = data.get('description', existing_event.description)
+        existing_event.date = data.get('date', existing_event.date)
+        existing_event.time = data.get('time', existing_event.time)
+        
+        # Validate updated event data
+        validation_errors = existing_event.validate()
+        if validation_errors:
+            return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
+        
+        # Update event using repository
+        success = repo.update(existing_event)
+        
+        if success:
+            return jsonify({
+                'message': 'Event updated successfully',
+                'event': existing_event.to_dict()
+            })
+        else:
+            return jsonify({'error': 'Failed to update event'}), 500
+            
+    except ValueError as e:
+        app.logger.error(f"Validation error updating event {event_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        app.logger.error(f"Error updating event {event_id}: {str(e)}")
+        return jsonify({'error': 'Failed to update event'}), 500
 
 def get_events_for_month(year, month):
     """Helper function to get events for a specific month"""
@@ -186,6 +197,7 @@ if __name__ == '__main__':
     # Initialize database on startup
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
