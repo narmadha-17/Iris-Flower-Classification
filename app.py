@@ -2,13 +2,57 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from datetime import datetime, timedelta
 import calendar
 import os
-from models import EventRepository, Event, create_event_from_dict, event_repository
+import sys
+import logging
+from models import EventRepository, Event, create_event_from_dict, event_repository, DatabaseManager
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('calendar_app.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
 # Use the repository from models
 repo = event_repository
+
+def init_database():
+    """Initialize the database and handle any initialization errors"""
+    try:
+        app.logger.info("Initializing database...")
+        
+        # Create database manager instance to ensure database is initialized
+        db_manager = DatabaseManager()
+        
+        # Test database connection
+        test_connection = db_manager.get_connection()
+        test_connection.close()
+        
+        app.logger.info("Database initialized successfully")
+        return True
+        
+    except Exception as e:
+        app.logger.error(f"Database initialization failed: {str(e)}")
+        return False
+
+def handle_database_error(operation, error):
+    """Centralized database error handling"""
+    error_msg = f"Database error during {operation}: {str(error)}"
+    app.logger.error(error_msg)
+    
+    # Return appropriate error response based on operation type
+    if "connection" in str(error).lower():
+        return jsonify({'error': 'Database connection failed. Please try again later.'}), 503
+    elif "constraint" in str(error).lower():
+        return jsonify({'error': 'Data validation error. Please check your input.'}), 400
+    else:
+        return jsonify({'error': f'Database operation failed: {operation}'}), 500
 
 @app.route('/')
 def index():
@@ -221,6 +265,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
