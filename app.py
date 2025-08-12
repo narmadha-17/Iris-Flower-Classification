@@ -1,36 +1,14 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from datetime import datetime, timedelta
 import calendar
-import sqlite3
 import os
+from models import EventRepository, Event, create_event_from_dict, event_repository
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 
-# Database configuration
-DATABASE = 'calendar.db'
-
-def get_db_connection():
-    """Get database connection"""
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_db():
-    """Initialize the database with events table"""
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT,
-            date TEXT NOT NULL,
-            time TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+# Use the repository from models
+repo = event_repository
 
 @app.route('/')
 def index():
@@ -205,3 +183,4 @@ if __name__ == '__main__':
     # Initialize database on startup
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
