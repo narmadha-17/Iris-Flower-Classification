@@ -47,43 +47,24 @@ def get_events():
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
     
-    conn = get_db_connection()
-    
-    if date:
-        # Get events for specific date
-        events = conn.execute(
-            'SELECT * FROM events WHERE date = ? ORDER BY time',
-            (date,)
-        ).fetchall()
-    elif year and month:
-        # Get events for specific month
-        start_date = f"{year}-{month:02d}-01"
-        if month == 12:
-            end_date = f"{year + 1}-01-01"
+    try:
+        if date:
+            # Get events for specific date
+            events = repo.get_by_date(date)
+        elif year and month:
+            # Get events for specific month
+            events = repo.get_by_month(year, month)
         else:
-            end_date = f"{year}-{month + 1:02d}-01"
+            # Get all events if no parameters provided
+            events = repo.get_all()
         
-        events = conn.execute(
-            'SELECT * FROM events WHERE date >= ? AND date < ? ORDER BY date, time',
-            (start_date, end_date)
-        ).fetchall()
-    else:
-        events = []
-    
-    conn.close()
-    
-    # Convert to list of dictionaries
-    events_list = []
-    for event in events:
-        events_list.append({
-            'id': event['id'],
-            'title': event['title'],
-            'description': event['description'],
-            'date': event['date'],
-            'time': event['time']
-        })
-    
-    return jsonify(events_list)
+        # Convert to list of dictionaries
+        events_list = [event.to_dict() for event in events]
+        return jsonify(events_list)
+        
+    except Exception as e:
+        app.logger.error(f"Error retrieving events: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve events'}), 500
 
 @app.route('/events', methods=['POST'])
 def create_event():
@@ -183,5 +164,6 @@ if __name__ == '__main__':
     # Initialize database on startup
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
