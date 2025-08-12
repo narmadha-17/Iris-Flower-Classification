@@ -175,22 +175,27 @@ def create_event():
 def delete_event(event_id):
     """API endpoint to delete an event"""
     try:
+        app.logger.info(f"Attempting to delete event with ID: {event_id}")
+        
         # Check if event exists first
         event = repo.get_by_id(event_id)
         if not event:
+            app.logger.warning(f"Delete attempt for non-existent event ID: {event_id}")
             return jsonify({'error': 'Event not found'}), 404
         
         # Delete the event
         success = repo.delete(event_id)
         
         if success:
+            app.logger.info(f"Event {event_id} deleted successfully")
             return jsonify({'message': 'Event deleted successfully'})
         else:
+            app.logger.error(f"Failed to delete event {event_id} - database operation failed")
             return jsonify({'error': 'Failed to delete event'}), 500
             
     except Exception as e:
-        app.logger.error(f"Error deleting event {event_id}: {str(e)}")
-        return jsonify({'error': 'Failed to delete event'}), 500
+        app.logger.error(f"Database error deleting event {event_id}: {str(e)}")
+        return handle_database_error(f"delete event {event_id}", e)
 
 @app.route('/events/<int:event_id>', methods=['PUT'])
 def update_event(event_id):
@@ -293,6 +298,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
