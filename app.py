@@ -319,9 +319,96 @@ def get_event_by_id(event_id):
         app.logger.error(f"Database error retrieving event {event_id}: {str(e)}")
         return handle_database_error(f"retrieve event {event_id}", e)
 
+# Error handlers for better user experience
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors"""
+    app.logger.warning(f"404 error: {request.url}")
+    if request.path.startswith('/api/') or request.path.startswith('/events'):
+        return jsonify({'error': 'Resource not found'}), 404
+    return redirect(url_for('index'))
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors"""
+    app.logger.error(f"500 error: {str(error)}")
+    if request.path.startswith('/api/') or request.path.startswith('/events'):
+        return jsonify({'error': 'Internal server error'}), 500
+    return redirect(url_for('index'))
+
+@app.errorhandler(400)
+def bad_request_error(error):
+    """Handle 400 errors"""
+    app.logger.warning(f"400 error: {str(error)}")
+    return jsonify({'error': 'Bad request'}), 400
+
+@app.before_first_request
+def initialize_application():
+    """Initialize application on first request"""
+    app.logger.info("Initializing calendar application...")
+    
+    # Initialize database
+    if not init_database():
+        app.logger.critical("Failed to initialize database. Application may not function properly.")
+    
+    # Log application startup
+    app.logger.info("Calendar application initialized successfully")
+
+@app.before_request
+def log_request_info():
+    """Log request information for debugging"""
+    if app.debug:
+        app.logger.debug(f"Request: {request.method} {request.path}")
+
+@app.after_request
+def log_response_info(response):
+    """Log response information and add security headers"""
+    if app.debug:
+        app.logger.debug(f"Response: {response.status_code}")
+    
+    # Add security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    return response
+
+def create_app():
+    """Application factory function"""
+    # Initialize database
+    if not init_database():
+        app.logger.critical("Database initialization failed!")
+        sys.exit(1)
+    
+    app.logger.info("Calendar application created successfully")
+    return app
+
 if __name__ == '__main__':
-    # Database is automatically initialized by the models module
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    try:
+        # Initialize database on startup
+        app.logger.info("Starting calendar application...")
+        
+        if not init_database():
+            app.logger.critical("Database initialization failed. Exiting.")
+            sys.exit(1)
+        
+        # Test database connection before starting server
+        try:
+            test_count = repo.count_events()
+            app.logger.info(f"Database connection verified. Current event count: {test_count}")
+        except Exception as e:
+            app.logger.error(f"Database connection test failed: {str(e)}")
+            sys.exit(1)
+        
+        app.logger.info("Starting Flask development server...")
+        app.run(debug=True, host='0.0.0.0', port=5000)
+        
+    except KeyboardInterrupt:
+        app.logger.info("Application shutdown requested by user")
+    except Exception as e:
+        app.logger.critical(f"Failed to start application: {str(e)}")
+        sys.exit(1)
+
 
 
 
