@@ -106,11 +106,19 @@ def get_events():
     month = request.args.get('month', type=int)
     
     try:
+        # Validate date parameter if provided
         if date:
-            # Get events for specific date
-            events = repo.get_by_date(date)
+            try:
+                datetime.strptime(date, '%Y-%m-%d')
+                events = repo.get_by_date(date)
+            except ValueError:
+                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
         elif year and month:
-            # Get events for specific month
+            # Validate year and month parameters
+            if year < 1900 or year > 2100:
+                return jsonify({'error': 'Year must be between 1900 and 2100'}), 400
+            if month < 1 or month > 12:
+                return jsonify({'error': 'Month must be between 1 and 12'}), 400
             events = repo.get_by_month(year, month)
         else:
             # Get all events if no parameters provided
@@ -121,8 +129,8 @@ def get_events():
         return jsonify(events_list)
         
     except Exception as e:
-        app.logger.error(f"Error retrieving events: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve events'}), 500
+        app.logger.error(f"Database error retrieving events: {str(e)}")
+        return handle_database_error("retrieve events", e)
 
 @app.route('/events', methods=['POST'])
 def create_event():
@@ -279,6 +287,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
