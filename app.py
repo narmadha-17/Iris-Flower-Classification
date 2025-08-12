@@ -57,32 +57,46 @@ def handle_database_error(operation, error):
 @app.route('/')
 def index():
     """Main calendar view"""
-    # Get current date or date from query parameters
-    year = request.args.get('year', datetime.now().year, type=int)
-    month = request.args.get('month', datetime.now().month, type=int)
-    
-    # Handle month/year navigation
-    if month < 1:
-        month = 12
-        year -= 1
-    elif month > 12:
-        month = 1
-        year += 1
-    
-    # Get calendar data
-    cal = calendar.monthcalendar(year, month)
-    month_name = calendar.month_name[month]
-    
-    # Get events for the current month using repository
-    events = repo.get_events_grouped_by_date(year, month)
-    
-    return render_template('calendar.html', 
-                         calendar_data=cal,
-                         year=year,
-                         month=month,
-                         month_name=month_name,
-                         events=events,
-                         today=datetime.now().date())
+    try:
+        # Get current date or date from query parameters
+        year = request.args.get('year', datetime.now().year, type=int)
+        month = request.args.get('month', datetime.now().month, type=int)
+        
+        # Validate year and month parameters
+        if year < 1900 or year > 2100:
+            year = datetime.now().year
+        if month < 1 or month > 12:
+            month = datetime.now().month
+        
+        # Handle month/year navigation
+        if month < 1:
+            month = 12
+            year -= 1
+        elif month > 12:
+            month = 1
+            year += 1
+        
+        # Get calendar data
+        cal = calendar.monthcalendar(year, month)
+        month_name = calendar.month_name[month]
+        
+        # Get events for the current month using repository
+        events = repo.get_events_grouped_by_date(year, month)
+        
+        return render_template('calendar.html', 
+                             calendar_data=cal,
+                             year=year,
+                             month=month,
+                             month_name=month_name,
+                             events=events,
+                             today=datetime.now().date())
+                             
+    except Exception as e:
+        app.logger.error(f"Error loading calendar view: {str(e)}")
+        # Return a basic error page or redirect to current month
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+        return redirect(url_for('index', year=current_year, month=current_month))
 
 @app.route('/events')
 def get_events():
@@ -265,6 +279,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
