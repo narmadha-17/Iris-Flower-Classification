@@ -1,0 +1,49 @@
+# Calendar Application Dependencies
+
+# Core Flask framework
+Flask==3.0.0
+
+# Flask extensions (if needed for future enhancements)
+Flask-CORS==4.0.0
+
+# Database support (SQLite is built into Python, but these might be useful)
+# SQLAlchemy==2.0.23  # Uncomment if you want to use SQLAlchemy ORM in the future
+
+# Development and testing dependencies
+pytest==7.4.3
+pytest-flask==1.3.0
+
+# Code quality and formatting
+black==23.11.0
+flake8==6.1.0
+
+# Security and validation
+Werkzeug==3.0.1
+
+# Date and time handling (built into Python, but useful for complex operations)
+python-dateutil==2.8.2
+
+# Optional: For enhanced logging and monitoring
+colorlog==6.8.0
+
+# Optional: For environment variable management
+python-dotenv==1.0.0
+
+# Optional: For API documentation (if you want to add Swagger/OpenAPI)
+# flask-restx==1.3.0
+# flasgger==0.9.7.1
+
+# Optional: For enhanced security
+# flask-talisman==1.1.0
+
+# Optional: For rate limiting
+# flask-limiter==3.5.0
+
+# Development server (Gunicorn for production deployment)
+gunicorn==21.2.0
+
+# Optional: For database migrations (if using SQLAlchemy)
+# Flask-Migrate==4.0.5
+
+# Optional: For caching
+# Flask-Caching==2.1.0
