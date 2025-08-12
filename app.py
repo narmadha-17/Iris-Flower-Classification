@@ -29,8 +29,8 @@ def index():
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
     
-    # Get events for the current month
-    events = get_events_for_month(year, month)
+    # Get events for the current month using repository
+    events = repo.get_events_grouped_by_date(year, month)
     
     return render_template('calendar.html', 
                          calendar_data=cal,
@@ -183,4 +183,5 @@ if __name__ == '__main__':
     # Initialize database on startup
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
