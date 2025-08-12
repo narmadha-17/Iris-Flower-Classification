@@ -204,11 +204,15 @@ def update_event(event_id):
         data = request.get_json()
         
         if not data:
+            app.logger.warning(f"Update event {event_id} request with no data")
             return jsonify({'error': 'No data provided'}), 400
+        
+        app.logger.info(f"Attempting to update event with ID: {event_id}")
         
         # Check if event exists
         existing_event = repo.get_by_id(event_id)
         if not existing_event:
+            app.logger.warning(f"Update attempt for non-existent event ID: {event_id}")
             return jsonify({'error': 'Event not found'}), 404
         
         # Update event fields with provided data or keep existing values
@@ -220,25 +224,28 @@ def update_event(event_id):
         # Validate updated event data
         validation_errors = existing_event.validate()
         if validation_errors:
+            app.logger.warning(f"Event {event_id} update validation failed: {validation_errors}")
             return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
         
         # Update event using repository
         success = repo.update(existing_event)
         
         if success:
+            app.logger.info(f"Event {event_id} updated successfully")
             return jsonify({
                 'message': 'Event updated successfully',
                 'event': existing_event.to_dict()
             })
         else:
+            app.logger.error(f"Failed to update event {event_id} - database operation failed")
             return jsonify({'error': 'Failed to update event'}), 500
             
     except ValueError as e:
         app.logger.error(f"Validation error updating event {event_id}: {str(e)}")
         return jsonify({'error': str(e)}), 400
     except Exception as e:
-        app.logger.error(f"Error updating event {event_id}: {str(e)}")
-        return jsonify({'error': 'Failed to update event'}), 500
+        app.logger.error(f"Database error updating event {event_id}: {str(e)}")
+        return handle_database_error(f"update event {event_id}", e)
 
 # Additional event management routes
 
@@ -298,6 +305,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
