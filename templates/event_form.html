@@ -1,0 +1,516 @@
+<!-- Event Form Modal Template -->
+<!-- This template can be included in other templates or used as a standalone modal -->
+
+<div id="event-form-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="form-modal-title">Add New Event</h3>
+            <span class="close-btn" onclick="closeEventFormModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="event-form" onsubmit="submitEventForm(event)">
+                <!-- Event Title Field -->
+                <div class="form-group">
+                    <label for="event-title">
+                        Event Title <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="event-title" 
+                        name="title" 
+                        required 
+                        maxlength="200"
+                        placeholder="Enter event title"
+                        autocomplete="off"
+                    >
+                    <div class="field-help">Maximum 200 characters</div>
+                </div>
+                
+                <!-- Event Description Field -->
+                <div class="form-group">
+                    <label for="event-description">Description</label>
+                    <textarea 
+                        id="event-description" 
+                        name="description" 
+                        rows="4"
+                        maxlength="1000"
+                        placeholder="Enter event description (optional)"
+                    ></textarea>
+                    <div class="field-help">Maximum 1000 characters</div>
+                </div>
+                
+                <!-- Date and Time Row -->
+                <div class="form-row">
+                    <!-- Event Date Field -->
+                    <div class="form-group">
+                        <label for="event-date">
+                            Date <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="date" 
+                            id="event-date" 
+                            name="date" 
+                            required
+                        >
+                        <div class="field-help">Select event date</div>
+                    </div>
+                    
+                    <!-- Event Time Field -->
+                    <div class="form-group">
+                        <label for="event-time">Time</label>
+                        <input 
+                            type="time" 
+                            id="event-time" 
+                            name="time"
+                            step="300"
+                        >
+                        <div class="field-help">Optional event time</div>
+                    </div>
+                </div>
+
+                <!-- Event Category/Priority (Optional Enhancement) -->
+                <div class="form-group">
+                    <label for="event-category">Category</label>
+                    <select id="event-category" name="category">
+                        <option value="">Select category (optional)</option>
+                        <option value="work">Work</option>
+                        <option value="personal">Personal</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="appointment">Appointment</option>
+                        <option value="reminder">Reminder</option>
+                        <option value="birthday">Birthday</option>
+                        <option value="holiday">Holiday</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <div class="field-help">Helps organize your events</div>
+                </div>
+
+                <!-- Event Priority (Optional Enhancement) -->
+                <div class="form-group">
+                    <label for="event-priority">Priority</label>
+                    <select id="event-priority" name="priority">
+                        <option value="normal">Normal</option>
+                        <option value="low">Low</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <div class="field-help">Set event importance level</div>
+                </div>
+
+                <!-- Recurring Event Options (Optional Enhancement) -->
+                <div class="form-group">
+                    <label for="event-recurring">Recurring Event</label>
+                    <select id="event-recurring" name="recurring">
+                        <option value="none">No repeat</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                    <div class="field-help">Create repeating events</div>
+                </div>
+
+                <!-- All Day Event Toggle -->
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="event-all-day" name="all_day">
+                        <span class="checkmark"></span>
+                        All Day Event
+                    </label>
+                    <div class="field-help">Check if this is an all-day event</div>
+                </div>
+
+                <!-- Event Location (Optional Enhancement) -->
+                <div class="form-group">
+                    <label for="event-location">Location</label>
+                    <input 
+                        type="text" 
+                        id="event-location" 
+                        name="location" 
+                        maxlength="200"
+                        placeholder="Enter event location (optional)"
+                        autocomplete="off"
+                    >
+                    <div class="field-help">Where will this event take place?</div>
+                </div>
+
+                <!-- Event URL/Link (Optional Enhancement) -->
+                <div class="form-group">
+                    <label for="event-url">Related Link</label>
+                    <input 
+                        type="url" 
+                        id="event-url" 
+                        name="url" 
+                        placeholder="https://example.com (optional)"
+                        autocomplete="off"
+                    >
+                    <div class="field-help">Add a related website or document link</div>
+                </div>
+
+                <!-- Form Validation Messages -->
+                <div id="form-validation-messages" class="validation-messages" style="display: none;">
+                    <ul id="validation-errors-list"></ul>
+                </div>
+                
+                <!-- Form Action Buttons -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="save-event-btn">
+                        <span class="btn-icon">💾</span>
+                        <span class="btn-text">Save Event</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancel-form-btn" onclick="closeEventFormModal()">
+                        <span class="btn-icon">❌</span>
+                        <span class="btn-text">Cancel</span>
+                    </button>
+                    <button type="button" class="btn btn-danger" id="delete-event-btn" style="display: none;" onclick="deleteCurrentEvent()">
+                        <span class="btn-icon">🗑️</span>
+                        <span class="btn-text">Delete Event</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Date Selection Helper -->
+<div class="quick-date-selector" style="display: none;">
+    <div class="quick-date-options">
+        <h4>Quick Date Selection</h4>
+        <div class="date-buttons">
+            <button type="button" class="btn btn-sm" onclick="setQuickDate('today')">Today</button>
+            <button type="button" class="btn btn-sm" onclick="setQuickDate('tomorrow')">Tomorrow</button>
+            <button type="button" class="btn btn-sm" onclick="setQuickDate('next-week')">Next Week</button>
+            <button type="button" class="btn btn-sm" onclick="setQuickDate('next-month')">Next Month</button>
+        </div>
+    </div>
+</div>
+
+<!-- Event Form Specific Styles -->
+<style>
+/* Event Form Specific Styles */
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.required {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    background-color: #fff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-color: #f8f9ff;
+}
+
+.form-group input:invalid {
+    border-color: #dc3545;
+}
+
+.form-group input:valid {
+    border-color: #28a745;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.field-help {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Checkbox Styling */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+    transform: scale(1.2);
+}
+
+/* Validation Messages */
+.validation-messages {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 20px;
+    color: #721c24;
+}
+
+.validation-messages ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.validation-messages li {
+    margin-bottom: 4px;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+/* Quick Date Selector */
+.quick-date-selector {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.quick-date-selector h4 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #495057;
+}
+
+.date-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .date-buttons {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+</style>
+
+<!-- Event Form JavaScript Functions -->
+<script>
+// Event Form Management Functions
+function closeEventFormModal() {
+    const modal = document.getElementById('event-form-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        resetEventForm();
+    }
+}
+
+function resetEventForm() {
+    const form = document.getElementById('event-form');
+    if (form) {
+        form.reset();
+        hideValidationMessages();
+        document.getElementById('delete-event-btn').style.display = 'none';
+        document.getElementById('form-modal-title').textContent = 'Add New Event';
+    }
+}
+
+function submitEventForm(event) {
+    event.preventDefault();
+    
+    // This function should be implemented in the main calendar.js
+    // or can be customized based on the application's needs
+    if (typeof window.calendarApp !== 'undefined' && window.calendarApp.submitEventForm) {
+        window.calendarApp.submitEventForm();
+    } else {
+        console.warn('Calendar app not found. Please ensure calendar.js is loaded.');
+    }
+}
+
+function deleteCurrentEvent() {
+    // This function should be implemented in the main calendar.js
+    if (typeof window.calendarApp !== 'undefined' && window.calendarApp.deleteCurrentEvent) {
+        window.calendarApp.deleteCurrentEvent();
+    } else {
+        console.warn('Calendar app not found. Please ensure calendar.js is loaded.');
+    }
+}
+
+function setQuickDate(option) {
+    const dateInput = document.getElementById('event-date');
+    const today = new Date();
+    let targetDate = new Date();
+    
+    switch (option) {
+        case 'today':
+            targetDate = today;
+            break;
+        case 'tomorrow':
+            targetDate.setDate(today.getDate() + 1);
+            break;
+        case 'next-week':
+            targetDate.setDate(today.getDate() + 7);
+            break;
+        case 'next-month':
+            targetDate.setMonth(today.getMonth() + 1);
+            break;
+    }
+    
+    dateInput.value = targetDate.toISOString().split('T')[0];
+}
+
+function showValidationMessages(errors) {
+    const messagesDiv = document.getElementById('form-validation-messages');
+    const errorsList = document.getElementById('validation-errors-list');
+    
+    if (errors && errors.length > 0) {
+        errorsList.innerHTML = errors.map(error => `<li>${error}</li>`).join('');
+        messagesDiv.style.display = 'block';
+    }
+}
+
+function hideValidationMessages() {
+    const messagesDiv = document.getElementById('form-validation-messages');
+    messagesDiv.style.display = 'none';
+}
+
+// All-day event toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const allDayCheckbox = document.getElementById('event-all-day');
+    const timeInput = document.getElementById('event-time');
+    
+    if (allDayCheckbox && timeInput) {
+        allDayCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                timeInput.disabled = true;
+                timeInput.value = '';
+                timeInput.style.opacity = '0.5';
+            } else {
+                timeInput.disabled = false;
+                timeInput.style.opacity = '1';
+            }
+        });
+    }
+});
+</script>
