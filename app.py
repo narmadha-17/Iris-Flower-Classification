@@ -284,15 +284,23 @@ def count_events():
     
     try:
         if date:
+            # Validate date format
+            try:
+                datetime.strptime(date, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+            
             count = repo.count_events_by_date(date)
+            app.logger.info(f"Event count for {date}: {count}")
             return jsonify({'date': date, 'count': count})
         else:
             total_count = repo.count_events()
+            app.logger.info(f"Total event count: {total_count}")
             return jsonify({'total_count': total_count})
             
     except Exception as e:
-        app.logger.error(f"Error counting events: {str(e)}")
-        return jsonify({'error': 'Failed to count events'}), 500
+        app.logger.error(f"Database error counting events: {str(e)}")
+        return handle_database_error("count events", e)
 
 @app.route('/events/<int:event_id>')
 def get_event_by_id(event_id):
@@ -312,6 +320,7 @@ def get_event_by_id(event_id):
 if __name__ == '__main__':
     # Database is automatically initialized by the models module
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
