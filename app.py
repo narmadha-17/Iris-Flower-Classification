@@ -102,15 +102,23 @@ def create_event():
 @app.route('/events/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
     """API endpoint to delete an event"""
-    conn = get_db_connection()
-    result = conn.execute('DELETE FROM events WHERE id = ?', (event_id,))
-    conn.commit()
-    conn.close()
-    
-    if result.rowcount == 0:
-        return jsonify({'error': 'Event not found'}), 404
-    
-    return jsonify({'message': 'Event deleted successfully'})
+    try:
+        # Check if event exists first
+        event = repo.get_by_id(event_id)
+        if not event:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        # Delete the event
+        success = repo.delete(event_id)
+        
+        if success:
+            return jsonify({'message': 'Event deleted successfully'})
+        else:
+            return jsonify({'error': 'Failed to delete event'}), 500
+            
+    except Exception as e:
+        app.logger.error(f"Error deleting event {event_id}: {str(e)}")
+        return jsonify({'error': 'Failed to delete event'}), 500
 
 @app.route('/events/<int:event_id>', methods=['PUT'])
 def update_event(event_id):
@@ -178,6 +186,7 @@ if __name__ == '__main__':
     # Initialize database on startup
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
